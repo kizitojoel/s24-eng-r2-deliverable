@@ -31,7 +31,7 @@ export default async function SpeciesList() {
       <Separator className="my-4" />
       <div className="flex flex-wrap justify-center">
         {/* Pass in the sessionId to this SpeciesCard so that we can tell who authored it */}
-        {species?.map((species) => <SpeciesCard key={species.id} species={species} />)}
+        {species?.map((species) => <SpeciesCard key={species.id} species={species} userId={sessionId} />)}
       </div>
     </>
   );

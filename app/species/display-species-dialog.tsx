@@ -13,17 +13,7 @@ can cause errors with matching props and state in child components if the list o
 import type { Database } from "@/lib/schema";
 // Importing everything for my dialog to work
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Label } from "@radix-ui/react-label";
-import { Separator } from "@radix-ui/react-separator";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { useState, type BaseSyntheticEvent } from "react";
 
 // For part 2
@@ -80,7 +70,7 @@ Read more here: https://legacy.react-hook-form.com/api/useform/
 
 type Species = Database["public"]["Tables"]["species"]["Row"];
 
-export default function DisplaySpeciesDialog({ species }: { species: Species }) {
+export default function DisplaySpeciesDialog({ species, userId }: { species: Species; userId: string }) {
   // Control open/closed state of the dialog
   const [open, setOpen] = useState<boolean>(false);
 
@@ -89,11 +79,13 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
 
   const startEditing = () => {
     setIsEditing(true);
+    console.log("Started editing");
   };
 
   const handleCancel = () => {
     setIsEditing(false);
     form.reset(defaultValues);
+    console.log("Force close");
   };
 
   const defaultValues: Partial<FormData> = {
@@ -114,7 +106,8 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
     mode: "onChange",
   });
 
-  const onSubmit = async (input: FormData) => {
+  const onsubmit = async (input: FormData) => {
+    console.log("Submitting form with input:");
     // The `input` prop contains data that has already been processed by zod. We can now use it in a supabase query
     const supabase = createBrowserSupabaseClient();
     const { error } = await supabase
@@ -129,7 +122,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
       })
       .eq("id", species.id);
 
-    // Catch and report errors from Supabase and exit the onSubmit function with an early 'return' if an error occurred.
+    // Catch and report errors from Supabase and exit the onsubmit function with an early 'return' if an error occurred.
     if (error) {
       return toast({
         title: "Something went wrong.",
@@ -144,15 +137,13 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
     // Practically, this line can be removed because router.refresh() also resets the form. However, we left it as a reminder that you should generally consider form "cleanup" after an add/edit operation.
     form.reset(defaultValues);
 
-    setOpen(false);
-
     // Refresh all server components in the current route. This helps display the newly created species because species are fetched in a server component, species/page.tsx.
     // Refreshing that server component will display the new species from Supabase
     router.refresh();
 
     return toast({
-      title: "New species added!",
-      description: "Successfully added " + input.scientific_name + ".",
+      title: "Successfully Edited Species!",
+      description: "Successfully edited " + input.scientific_name + ".",
     });
   };
 
@@ -163,7 +154,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
           <Button className="mt-3 w-full">Learn More</Button>
         </DialogTrigger>
         <DialogContent className="max-h-screen overflow-y-auto sm:max-w-[600px]">
-          {!isEditing && (
+          {/* {!isEditing && (
             <>
               <DialogHeader>
                 <DialogTitle>Species Information</DialogTitle>
@@ -208,10 +199,10 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                 </DialogClose>
               </div>
             </>
-          )}
-          {isEditing && (
+          )} */}
+          {true && (
             <Form {...form}>
-              <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onSubmit)(e)}>
+              <form onSubmit={(e: BaseSyntheticEvent) => void form.handleSubmit(onsubmit)(e)}>
                 <div className="grid w-full items-center gap-4">
                   <FormField
                     control={form.control}
@@ -220,7 +211,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                       <FormItem>
                         <FormLabel>Scientific Name</FormLabel>
                         <FormControl>
-                          <Input placeholder="Cavia porcellus" {...field} />
+                          <Input readOnly={!isEditing} placeholder="Cavia porcellus" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -236,7 +227,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                         <FormItem>
                           <FormLabel>Common Name</FormLabel>
                           <FormControl>
-                            <Input value={value ?? ""} placeholder="Guinea pig" {...rest} />
+                            <Input readOnly={!isEditing} value={value ?? ""} placeholder="Guinea pig" {...rest} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -249,7 +240,11 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Kingdom</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(kingdoms.parse(value))} value={field.value}>
+                        <Select
+                          disabled={!isEditing}
+                          onValueChange={(value) => field.onChange(kingdoms.parse(value))}
+                          value={field.value}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select a kingdom" />
@@ -280,6 +275,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                           <FormControl>
                             {/* Using shadcn/ui form with number: https://github.com/shadcn-ui/ui/issues/421 */}
                             <Input
+                              readOnly={!isEditing}
                               type="number"
                               value={value ?? ""}
                               placeholder="300000"
@@ -303,6 +299,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                           <FormLabel>Image URL</FormLabel>
                           <FormControl>
                             <Input
+                              readOnly={!isEditing}
                               value={value ?? ""}
                               placeholder="https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/George_the_amazing_guinea_pig.jpg/440px-George_the_amazing_guinea_pig.jpg"
                               {...rest}
@@ -324,6 +321,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                           <FormLabel>Description</FormLabel>
                           <FormControl>
                             <Textarea
+                              readOnly={!isEditing}
                               value={value ?? ""}
                               placeholder="The guinea pig or domestic guinea pig, also known as the cavy or domestic cavy, is a species of rodent belonging to the genus Cavia in the family Caviidae."
                               {...rest}
@@ -336,7 +334,7 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                   />
                 </div>
                 {/* ... rest of the form fields */}
-                <div className="flex">
+                <div className="mt-6 flex">
                   {/* Conditionally render action buttons depending on if the form is in viewing/editing mode */}
                   {isEditing ? (
                     <>
@@ -347,10 +345,9 @@ export default function DisplaySpeciesDialog({ species }: { species: Species }) 
                         Cancel
                       </Button>
                     </>
-                  ) : (
-                    // Toggle editing mode
+                  ) : userId === species.author ? (
                     <Button onClick={startEditing}>Edit Profile</Button>
-                  )}
+                  ) : null}
                 </div>
               </form>
             </Form>
