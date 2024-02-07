@@ -97,6 +97,26 @@ export default function DisplaySpeciesDialog({ species, userId }: { species: Spe
     description: species.description,
   };
 
+  const deleteSpecies = async () => {
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.from("species").delete().eq("id", species.id);
+
+    if (error) {
+      return toast({
+        title: "Something went wrong.",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+
+    toast({
+      title: "Successfully Deleted Species!",
+      description: "Successfully deleted " + species.scientific_name + ".",
+    });
+
+    router.refresh();
+  };
+
   const router = useRouter();
 
   // Instantiate form functionality with React Hook Form, passing in the Zod schema (for validation) and default values
@@ -346,7 +366,10 @@ export default function DisplaySpeciesDialog({ species, userId }: { species: Spe
                       </Button>
                     </>
                   ) : userId === species.author ? (
-                    <Button onClick={startEditing}>Edit Profile</Button>
+                    <div style={{ display: "flex", justifyContent: "space-around", width: "100%" }}>
+                      <Button onClick={startEditing}>Edit Profile</Button>
+                      <Button onClick={() => void deleteSpecies()}>Delete Species</Button>
+                    </div>
                   ) : null}
                 </div>
               </form>

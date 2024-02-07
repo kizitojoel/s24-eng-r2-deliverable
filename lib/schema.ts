@@ -3,6 +3,42 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export interface Database {
   public: {
     Tables: {
+      comments: {
+        Row: {
+          comment: string | null;
+          id: number;
+          speciesId: number;
+          userId: string;
+        };
+        Insert: {
+          comment?: string | null;
+          id?: number;
+          speciesId: number;
+          userId: string;
+        };
+        Update: {
+          comment?: string | null;
+          id?: number;
+          speciesId?: number;
+          userId?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "comments_speciesId_fkey";
+            columns: ["speciesId"];
+            isOneToOne: false;
+            referencedRelation: "species";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "comments_userId_fkey";
+            columns: ["userId"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           biography: string | null;
